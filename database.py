@@ -1,4 +1,5 @@
 import sqlite3
+from typing import List, Dict
 
 def connect():
     return sqlite3.connect('finance_data.db')
@@ -54,17 +55,21 @@ def create_tables():
     conn.commit()
     conn.close()
 
-def add_countries():
+def add_country(country_code, country_name, currency_code):
     conn = connect()
     cur = conn.cursor()
-
-    cur.execute('''
+    cur.execute(f'''
         INSERT OR IGNORE INTO countries (country_code, country_name, currency_code)
-        VALUES ('UK', 'United Kingdom', 'GBP')    
+        VALUES ('{country_code}', 
+                '{country_name}', 
+                '{currency_code}')    
     ''')
-
     conn.commit()
     conn.close()
+
+def add_countries():
+    add_country('UK', 'United Kingdom', 'GBP')
+    add_country('US', 'United States',  'USD')
 
 def add_metrics():
     conn = connect()
@@ -78,23 +83,26 @@ def add_metrics():
     conn.commit()
     conn.close()
 
-def add_sources():
-    # Bank of England - Policy Interest Rate
-    country_id = get_country_id('UK')
-    metric_id = get_metric_id('policy interest rate')   
+def add_source(country_code, metric_id, source_name, source_url):
+
+    country_id = get_country_id(country_code)
     conn = connect()
     cur = conn.cursor()
 
     cur.execute('''
         INSERT OR IGNORE INTO sources (country_id, metric_id, source_name, source_url)
         VALUES (?, ?, ?, ?)
-    ''', (country_id, metric_id, 'Bank of England', 'https://www.bankofengland.co.uk/boeapps/database/',))
+    ''', (country_id, metric_id, source_name, source_url,))
 
     conn.commit()
     conn.close()
 
+def add_sources():
+    add_source('UK', 'policy interest rate', 'Bank of England', 'https://www.bankofengland.co.uk/boeapps/database/')
+    add_source('US', 'policy interest rate', 'Federal Reserve Bank of St.Louis', 'https://fred.stlouisfed.org/series/DFF')
+
 # USE #
-def insert_data(country_id, metric_id, data):
+def insert_data(country_id, metric_id, data: List[Dict]):
     conn = connect()
     cur = conn.cursor()
 
