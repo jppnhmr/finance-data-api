@@ -61,10 +61,8 @@ def add_country(country_code, country_name, currency_code):
     cur = conn.cursor()
     cur.execute(f'''
         INSERT OR IGNORE INTO countries (country_code, country_name, currency_code)
-        VALUES ('{country_code}', 
-                '{country_name}', 
-                '{currency_code}')    
-    ''')
+        VALUES (?, ?, ?)    
+    ''', country_code, country_name, currency_code)
     conn.commit()
     conn.close()
 
@@ -76,11 +74,10 @@ def add_metric(metric_name, unit):
     conn = connect()
     cur = conn.cursor()
 
-    cur.execute(f'''
+    cur.execute('''
         INSERT OR IGNORE INTO metrics (metric_name, unit)
-        VALUES ('{metric_name}',
-                '{unit}')
-    ''')
+        VALUES (?,?)
+    ''', (metric_name, unit))
 
     conn.commit()
     conn.close()
