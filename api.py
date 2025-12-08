@@ -27,6 +27,14 @@ def metrics():
 
     return metrics
 
+@app.get("/data/global/{metric}")
+def get_global_metric_data(metric: str):
+    metric_id = db.get_metric_id(metric)
+
+    data = db.get_data_global_metric(metric_id=metric_id)
+
+    return data
+
 @app.get("/data/{country}/{metric}")
 def get_country_metric_data(country: str, metric: str):
     country_id = db.get_country_id(country)

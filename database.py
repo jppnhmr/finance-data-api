@@ -191,6 +191,17 @@ def get_data_country_metric_latest(country_id: str, metric_id: str):
 
     return cur.fetchall()
 
+def get_data_global_metric(metric_id: str):
+    conn = connect()
+    cur = conn.cursor()
+
+    cur.execute('''
+    SELECT date, value FROM  data_points
+    WHERE metric_id = ?
+    ''', (metric_id,))
+
+    return cur.fetchall()
+
 if __name__ == '__main__':
 
     print('----- Database Setup: Running -----', end='\r')
