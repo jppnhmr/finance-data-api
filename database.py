@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from typing import List, Dict
 
@@ -203,6 +204,9 @@ def get_data_global_metric(metric_id: str):
     return cur.fetchall()
 
 if __name__ == '__main__':
+    # Remove old database
+    if os.path.exists('finance_data.db'):
+        os.remove('finance_data.db')
 
     print('----- Database Setup: Running -----', end='\r')
     # create
