@@ -221,6 +221,21 @@ def get_metrics():
     conn.close()
     return data
 
+def get_metric_unit(metric_name):
+    conn = connect()
+    cur = conn.cursor()
+
+    query = ('''
+    SELECT unit FROM metrics
+    WHERE metric_name = ?
+    ''')
+    values = (metric_name,)
+    cur.execute(query, values)
+
+    data = cur.fetchall()
+    conn.close()
+    return data
+
 if __name__ == '__main__':
     # Remove old database
     if os.path.exists('finance_data.db'):

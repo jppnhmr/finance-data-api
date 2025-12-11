@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.widgets import Cursor
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -10,7 +11,7 @@ from typing import List
 import database as db
 
 # Make a graph of List[(x_values, y_values)]
-def plot_data(data: List[tuple], title, y_axis):
+def plot_data(data: List[tuple], title, y_axis, y_unit):
     dates = []
     values = []
     for d in data:
@@ -21,9 +22,15 @@ def plot_data(data: List[tuple], title, y_axis):
     ax.plot(dates, values)
     ax.grid(True)
 
+    # Major tick per year, Minor tick per month
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=2))
+
+    # 
+    y_min, y_max = np.min(values), np.max(values)
+    ax.set_ylim(y_min, y_max)
+    ax.yaxis.set_major_locator(MaxNLocator(nbins='auto'))
 
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -46,6 +53,7 @@ def cli_plot_data():
         metric = input('Type the metric you want to plot.\n>>')
     print(f' - Selected: {metric} - ')
     is_global = 'global' in str(metric)
+    m_unit = db.get_metric_unit(metric)
 
     if not is_global:
         # Choose Country
@@ -71,7 +79,7 @@ def cli_plot_data():
         
     # Plot Data
     title = f'{metric}' if is_global else f"{country} {metric}"
-    plot_data(data, title, y_axis=metric)
+    plot_data(data, title, y_axis=metric, y_unit=m_unit)
 
     print('##### Done #####')
 
