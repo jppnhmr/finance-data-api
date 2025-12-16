@@ -3,3 +3,4 @@ beautifulsoup4
 fastapi[standard]
 matplotlib
 pandas
+PyQt5

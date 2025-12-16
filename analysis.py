@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.widgets import Cursor
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, LinearLocator
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -27,10 +27,10 @@ def plot_data(data: List[tuple], title, y_axis, y_unit):
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_minor_locator(mdates.MonthLocator(interval=2))
 
-    # 
+    # Minor ticks evenly spaced
     y_min, y_max = np.min(values), np.max(values)
     ax.set_ylim(y_min, y_max)
-    ax.yaxis.set_major_locator(MaxNLocator(nbins='auto'))
+    ax.yaxis.set_major_locator(MaxNLocator(nbins='auto',steps=[10]))
 
     plt.xticks(rotation=45)
     plt.tight_layout()
