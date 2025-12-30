@@ -1,6 +1,7 @@
 import os
 import sqlite3
-from typing import List, Dict
+import pandas as pd
+from typing import List, Dict, Optional
 
 def connect():
     return sqlite3.connect('finance_data.db')
@@ -237,6 +238,26 @@ def get_metric_unit(metric_name):
     data = cur.fetchall()
     conn.close()
     return data
+
+# DataFrames #
+def get_df(metric_name: str, country_name: Optional[str] = None) -> pd.DataFrame:
+    
+    metric_id = get_metric_id(metric_name)
+    
+    data = []    
+    if country_name != None:
+        country_id = get_country_id(country_name)
+        data = get_data_country_metric(metric_id, country_id)
+    else:
+        data = get_data_global_metric(metric_id)
+
+    df = pd.Series(
+        dict(data),
+        index = [date for date, value in data]
+    )
+
+    return df
+
 
 def run():
     # Remove old database
