@@ -165,11 +165,13 @@ def get_data_country_metric(country_id: str, metric_id: str):
     cur = conn.cursor()
 
     cur.execute('''
-    SELECT date, value FROM  data_points
+    SELECT date, value FROM data_points
     WHERE country_id = ? AND metric_id = ?
     ''', (country_id, metric_id))
 
-    return cur.fetchall()
+    data = cur.fetchall()
+    conn.close()
+    return data
 
 def get_data_country_metric_latest(country_id: str, metric_id: str):
     conn = connect()
@@ -181,7 +183,9 @@ def get_data_country_metric_latest(country_id: str, metric_id: str):
     ORDER BY date DESC LIMIT 1
     ''', (country_id, metric_id))
 
-    return cur.fetchall()
+    data = cur.fetchall()
+    conn.close()
+    return data
 
 def get_data_global_metric(metric_id: str):
     conn = connect()
@@ -247,16 +251,16 @@ def get_series(metric_name: str, country_name: Optional[str] = None) -> pd.Serie
     data = []    
     if country_name != None:
         country_id = get_country_id(country_name)
-        data = get_data_country_metric(metric_id, country_id)
+        data = get_data_country_metric(country_id, metric_id)
     else:
         data = get_data_global_metric(metric_id)
 
-    df = pd.Series(
+    s = pd.Series(
         data=[value for date, value in data],
         index=pd.to_datetime([date for date, value in data])
     )
 
-    return df
+    return s
 
 
 def run():

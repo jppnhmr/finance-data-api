@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-from typing import List
+from typing import List, Dict
 
 import src.database as db
 
@@ -32,6 +32,18 @@ def get_idx_datas():
     idx_datas.append(db.get_data_global_metric(db.get_metric_id('global all commodities index')))
 
     return idx_datas
+
+def get_all_datas() -> Dict[str, pd.Series]:
+
+    datas = {
+        'Food': db.get_series('global food index'),
+        'Energy': db.get_series('global energy index'),
+        'All Commodities': db.get_series('global all commodities index'), 
+        'US': db.get_series('policy interest rate', 'US'),
+        'UK': db.get_series('policy interest rate', 'UK'),
+    }
+
+    return datas
 
 # Data Handling #
 def data_to_lines(datas: List[List[tuple]]):
@@ -138,8 +150,41 @@ def plot_interest_against_index(pir_datas: List[List[tuple]],
     ax2.set_ylabel('Index Values', color='tab:red')
 
     plt.title('Interest Rates vs Indices')
-    plt.grid(True, alpha=0.3)
+    ax1.grid(True, which='major', axis='x', alpha=0.3)
 
+    plt.show()
+
+def plot_datas(datas: Dict[str,pd.Series], pir_cols: List[str], idx_cols: List[str]):
+
+    fig, ax1 = plt.subplots(figsize=(10,6))
+    ax2 = ax1.twinx()
+
+    idx_colors = plt.cm.Reds(np.linspace(0.4, 0.9, len(idx_cols)))
+    pir_colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(pir_cols)))
+
+    lines = []
+
+    for i, col in enumerate(idx_cols):
+        ln = ax2.plot(datas[col].index, datas[col], label=col+' Index', color=idx_colors[i])
+        lines += ln   
+
+    for i, col in enumerate(pir_cols):
+        ln = ax1.plot(datas[col].index, datas[col], label=col+' Interest Rate', color=pir_colors[i])
+        lines += ln
+
+    ax1.set_xlabel('Year')
+    ax1.set_ylabel('Interest Rate (%)', color='tab:blue', fontweight='bold')
+    ax2.set_ylabel('Index Values', color='tab:red', fontweight='bold')
+    plt.title('Policy Interest Rates vs Indices',fontsize=14)
+
+    labs = [l.get_label() for l in lines]
+    ax1.legend(lines, labs, loc='upper left', frameon=True, fontsize='small')
+
+    ax1.grid(True, which='major', axis='both', alpha=0.3)
+    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    plt.setp(ax1.get_xticklabels(), rotation=45)
+
+    plt.tight_layout()
     plt.show()
 
 def cli_plot_data():
@@ -185,6 +230,26 @@ def cli_plot_data():
     plot_data(data, title, y_axis=metric, y_unit=m_unit)
 
     print('##### Done #####')
+
+# Analysis #
+def analysis():
+    datas = get_all_datas()
+
+    # Downsample to Monthly data points
+    for col in ['UK','US']:
+        # Ensure index is datetime object
+        datas[col].index = pd.to_datetime(datas[col].index)
+
+        #Forward fill incase of missing values
+        daily_series = datas[col].resample('D').ffill()
+
+        # Resample to Month Start
+        datas[col] = daily_series.resample('MS').mean()
+
+    plot_datas(datas, 
+        pir_cols = ['UK','US'], 
+        idx_cols = ['Food', 'Energy', 'All Commodities'])
+
 
 if __name__ == "__main__":
     cli_plot_data()
