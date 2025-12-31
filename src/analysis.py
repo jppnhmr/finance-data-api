@@ -162,7 +162,7 @@ def plot_datas(datas: Dict[str,pd.Series],
     ax2 = ax1.twinx()
 
     idx_colors = plt.cm.Reds(np.linspace(0.4, 0.9, len(idx_cols)))
-    pir_colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(pir_cols)))
+    pir_colors = plt.cm.Blues(np.linspace(0.9, 0.4, len(pir_cols)))
 
     elements = []
 
@@ -193,6 +193,7 @@ def plot_datas(datas: Dict[str,pd.Series],
     plt.setp(ax1.get_xticklabels(), rotation=45)
 
     plt.tight_layout()
+    plt.savefig('imgs/policy_interest_rates_vs_indices.png')
     plt.show()
 
 def cli_plot_data():
@@ -250,6 +251,41 @@ def plot_rolling_corr(datas: Dict[str, pd.Series], window: int, pir: str, idx: s
 
     plt.show()
 
+def plot_rolling_corrs(datas: Dict[str, pd.Series], window: int, pir: str, idxs: List[str],
+                        v_shading: Optional[List[tuple]] = None):
+    fig, ax = plt.subplots(figsize=(12,5))
+
+    colors = plt.cm.viridis(np.linspace(0, 0.8, len(idxs)))
+
+    handles = []
+
+    for i, idx in enumerate(idxs):
+        rolling_corr = datas[pir].rolling(window=window).corr(datas[idx])
+        line, = ax.plot(rolling_corr, color=colors[i], label=f"{idx}",linewidth=1.5,alpha=0.9)
+        handles.append(line)
+
+    if v_shading:
+        added_labels = set()
+        for start, end, label, color in v_shading:
+            patch = ax.axvspan(pd.to_datetime(start), pd.to_datetime(end),
+                               color=color, alpha=0.15,label=label)
+            handles.append(patch)
+
+    ax.set_ylim([-1.1,1.1])
+    ax.axhline(0, color='black', linestyle='--')
+
+    ax.set_title(f"{window}-Month Rolling Correlation: {pir} Rates vs Multiple Indices")
+    ax.set_ylabel("Pearson Coefficient")
+    ax.set_xlabel('Year')
+    ax.xaxis.set_major_locator(mdates.YearLocator(base=2))
+    ax.grid(True,alpha=0.2)
+
+    ax.legend(handles=handles,loc='upper left', bbox_to_anchor=(1,1), fontsize='small')
+
+    plt.tight_layout()
+    plt.savefig(f"imgs/{window}-month_rolling_correlation_{pir}_rates_vs_multiple_indices.png")
+    plt.show()
+
 
 # Analysis #
 def analysis():
@@ -277,14 +313,22 @@ def analysis():
 
     plot_datas(
         datas = datas, 
-        pir_cols = ['UK','US'], 
-        idx_cols = ['Food', 'Energy', 'All Commodities'],
+        pir_cols = ['US'], 
+        idx_cols = ['Food', 'All Commodities', 'Energy'],
         v_shading= recessions
     )
 
-    plot_rolling_corr(datas, 36, 'US', 'Energy')
-    plot_rolling_corr(datas, 36, 'US', 'Food')
-    plot_rolling_corr(datas, 36, 'US', 'All Commodities')
+    # Regimes
+    patches = [
+        ('2008-01-01', '2009-01-01', 'Financial Crisis', 'gray'),
+        ('2010-01-01', '2012-01-01', 'Early Recovery', 'green'),
+        ('2012-01-01', '2017-01-01', 'Uneven Growth', 'yellow'),
+        ('2017-01-01', '2019-01-01', 'Normalization', 'blue'),
+        ('2020-02-01', '2020-04-01', 'COVID-19', 'gray'),
+        ('2022-01-01', '2025-01-01',  'Post-Pandemic', 'purple'),
+    ]
+
+    plot_rolling_corrs(datas, 36, 'US', ['Food', 'All Commodities', 'Energy'], patches)
 
 
 if __name__ == "__main__":
